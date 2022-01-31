@@ -1,0 +1,12 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity >=0.6.0 <0.9.0;
+
+//contract should accept some kind of payment
+contract FundMe {
+
+  //payable function (color red in remix) can recieve ETH while being called
+  function fund() public payable {
+    
+  }
+}
