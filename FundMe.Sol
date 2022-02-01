@@ -28,7 +28,7 @@ contract FundMe {
    //function to get price of ETH in USD
    function getPrice() public view returns(uint256) {
         AggregatorV3Interface priceFeed = AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331);
-        (,int256 answer,,,) = priceFeed.latestRoundData();                                                      //latestRoundData returns 5 things but we need onluy "answer"
-        return uint256(answer);
+        (,int256 answer,,,) = priceFeed.latestRoundData();  //latestRoundData returns 5 things but we need onluy "answer"
+        return uint256(answer * 10000000000); //convert to wei
     }
 }
