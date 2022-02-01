@@ -2,6 +2,9 @@
 
 pragma solidity >=0.6.0 <0.9.0;
 
+// getting external data from chainlink contracts
+import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
+
 //contract should accept some kind of payment
 contract FundMe {
 
@@ -15,5 +18,9 @@ contract FundMe {
   /*payable function (color red in remix) can recieve ETH while being called;
   if we try to send ETH to any function that is not mentioned as payable,
   the transaction will be rejected and fail.*/
+  
+  /*function getVersion public view returns (uint256) {
+    AggregatorV3Interface priceFeed = AggregatorV3Interface();
+  }*/
   
 }
