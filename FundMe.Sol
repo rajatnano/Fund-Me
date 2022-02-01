@@ -19,8 +19,12 @@ contract FundMe {
   if we try to send ETH to any function that is not mentioned as payable,
   the transaction will be rejected and fail.*/
   
-  /*function getVersion public view returns (uint256) {
-    AggregatorV3Interface priceFeed = AggregatorV3Interface();
-  }*/
+  //function to get priceFeed version
+  function getVersion public view returns (uint256) {
+    AggregatorV3Interface priceFeed = AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331); //Kovan ETH-USD address https://docs.chain.link/docs/ethereum-addresses/
+    return priceFeed.version();
+  }
+  
+  
   
 }
