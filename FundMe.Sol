@@ -2,7 +2,7 @@
 
 pragma solidity >=0.6.0 <0.9.0;
 
-// getting external data from chainlink contracts
+// getting external data from chainlink contracts -> https://github.com/smartcontractkit/chainlink/blob/develop/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol
 import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
 
 //contract should accept some kind of payment
@@ -25,6 +25,10 @@ contract FundMe {
     return priceFeed.version();
   }
   
-  
-  
+   //function to get price of ETH in USD
+   function getPrice() public view returns(uint256) {
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331);
+        (,int256 answer,,,) = priceFeed.latestRoundData();                                                      //latestRoundData returns 5 things but we need onluy "answer"
+        return uint256(answer);
+    }
 }
