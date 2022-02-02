@@ -10,3 +10,5 @@ In this contract we learn about:
 5. Withdrawing funds (only by smart contract owner).
 6. Setting permissions
 7. Working with real blockchains and oracles (Kovan testnet in our case).
+
+Get free testnet ETH and LINK: https://faucets.chain.link/
