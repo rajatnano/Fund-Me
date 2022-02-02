@@ -1,52 +1,81 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.9.0;
+//smart contract to get latest ETH-USD price from an external chainlink oracle (using Kovan testnet address); add funds; withdraw funds (contract owner only)
+pragma solidity >=0.6.6 <0.9.0;
 
-// getting external data from chainlink contracts -> https://github.com/smartcontractkit/chainlink/blob/develop/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol
+// Get the latest ETH/USD price from chainlink price feed
 import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
 
-//contract should accept some kind of payment
+//SafeMath to avoid overflow since the chainlink contract version is 0.6.0; overflows were only fixed in 0.8.0
+import "@chainlink/contracts/src/v0.6/vendor/SafeMathChainlink.sol";
+
 contract FundMe {
-
-  address owner;
-
-  //to know total amount funded for particular address
-  mapping(address => uint256) public addressToAmountFunded;
-  
-  constructor() public {
-    owner = msg.sender;
-  }
-  
-  function fund() public payable {
-    addressToAmountFunded[msg.sender] += msg.value;
-  }
-  
-  /*payable function (color red in remix) can recieve ETH while being called;
-  if we try to send ETH to any function that is not mentioned as payable,
-  the transaction will be rejected and fail.*/
-  
-  //function to get priceFeed version
-  function getVersion public view returns (uint256) {
-    AggregatorV3Interface priceFeed = AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331); //Kovan ETH-USD address https://docs.chain.link/docs/ethereum-addresses/
-    return priceFeed.version();
-  }
-  
-   //function to get price of ETH in USD
-   function getPrice() public view returns(uint256) {
+    using SafeMathChainlink for uint256;
+    
+    //mapping to store which address deposited how many ETH
+    mapping(address => uint256) public addressToAmountFunded;
+    
+    // array of address of depositers (funderS)
+    address[] public funders;
+    
+    //address of the smart contract owner (the one who deploys the contract)
+    address public owner;
+    
+    //marks the first person to deploy the contract as "owner" of the contract
+    constructor() public {
+        owner = msg.sender;
+    }
+    
+    function fund() public payable {
+        uint256 minimumUSD = 50 * 10 ** 18; //convert to Wei bcz ETH is 18 decimal place and its lowest unit is Wei
+        
+        //check for minimum donation
+        require(getConversionRate(msg.value) >= minimumUSD, "You need to spend more ETH!");
+        
+        //add funded amount to address current holding
+        addressToAmountFunded[msg.sender] += msg.value;
+        
+        //push address to array
+        funders.push(msg.sender);
+    }
+    
+    //get version of the chainlink pricefeed from Kovan testnet
+    function getVersion() public view returns (uint256){
         AggregatorV3Interface priceFeed = AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331);
-        (,int256 answer,,,) = priceFeed.latestRoundData();  //latestRoundData returns 5 things but we need onluy "answer"
-        return uint256(answer * 10000000000); //convert to wei
+        return priceFeed.version();
     }
     
-    //function to convert input ETH amount into USD
-    function getConversionRate(uint256 ethAmount) public view returns(uint256) {
+    //get ETH-USD price
+    function getPrice() public view returns(uint256){
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331);
+        (,int256 answer,,,) = priceFeed.latestRoundData();
+         
+         //convert to Wei
+         return uint256(answer * 10000000000);
+    }
+    
+    //price in USD for ETH
+    function getConversionRate(uint256 ethAmount) public view returns (uint256){
         uint256 ethPrice = getPrice();
-        uint256 ethAmountInUSD = (ethPrice * ethAmount) / 1000000000000000000; // 1 ETH = 10^18 Wei
-        return ethAmountInUSD;
+        uint256 ethAmountInUsd = (ethPrice * ethAmount) / 1000000000000000000;   //10**18
+        return ethAmountInUsd;
     }
     
-    function withdraw() payable public {
+    modifier onlyOwner {
         require(msg.sender == owner);
-        msg.sender.transfer(address(this).balance); //this -> current contract
+        _;
+    }
+    
+   
+    function withdraw() payable onlyOwner public {
+    
+        msg.sender.transfer(address(this).balance);
+        
+        //wallet status is reset after withdrawal
+        for (uint256 funderIndex=0; funderIndex < funders.length; funderIndex++){
+            address funder = funders[funderIndex];
+            addressToAmountFunded[funder] = 0;
+        }
+        funders = new address[](0);
     }
 }
